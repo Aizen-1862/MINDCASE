@@ -1,142 +1,175 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#080c14">
-  <title>MINDCASE — Enter the Mind of a Detective</title>
-  <meta name="description" content="Investigate mysteries, examine evidence, question suspects, and prove your detective instincts in MINDCASE.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d16">
+  <meta name="description" content="MINDCASE — cinematic detective mysteries. Every clue matters.">
+  <title>MINDCASE | Every clue matters</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  <div class="ambient ambient-one"></div>
-  <div class="ambient ambient-two"></div>
-
   <header class="topbar">
-    <a href="#" class="brand" aria-label="MINDCASE home">
+    <a href="#" id="homeLink" class="brand">
       <span class="brand-icon">M</span>
-      <span>MIND<span class="brand-light">CASE</span><small>THE ART OF DEDUCTION</small></span>
+      <span>MIND<span class="brand-light">CASE</span>
+        <small>THE INVESTIGATION STARTS HERE</small>
+      </span>
     </a>
-    <div class="topbar-right">
-      <div class="rank-pill"><span>✦</span> <span id="rankName">Rookie</span></div>
-      <div class="xp-pill"><span>◆</span> <span id="xpCount">0</span> XP</div>
+    <div class="top-right">
+      <span id="connection">● OFFLINE SETUP</span>
+      <button id="signOut" class="btn btn-quiet hidden">Sign out</button>
     </div>
   </header>
 
-  <main class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-heading">INVESTIGATION FILES</div>
-      <div class="case-count"><span id="caseCount">10</span> CASES AVAILABLE</div>
-      <div id="caseList" class="case-list"></div>
-      <div class="sidebar-note">
-        <span class="note-icon">◉</span>
-        <div><strong>Observe everything.</strong><br><span>Every detail may matter.</span></div>
+  <main>
+    <div id="setupNotice" class="notice hidden">
+      <strong>Supabase setup required</strong>
+      <p>Add your Supabase URL and public key to <code>config.js</code>, then run <code>schema.sql</code> in your Supabase SQL Editor.</p>
+    </div>
+
+    <section id="authView" class="auth-layout">
+      <div class="hero">
+        <div class="eyebrow">CASE FILES ARE OPEN</div>
+        <h1>Every clue<br>has a <em>shadow.</em></h1>
+        <p class="hero-copy">The truth is rarely the first story you hear. Study the evidence, question the details, and decide who you believe.</p>
+        <div class="stamp">● YOUR NEXT CASE IS WAITING</div>
+        <div class="city-art">
+          <div class="city-caption">NIGHT SHIFT / DISTRICT 09</div>
+        </div>
       </div>
-    </aside>
 
-    <section class="main-content">
-      <section class="welcome-strip">
+      <div class="auth-card">
+        <div class="tabs">
+          <button id="loginTab" class="tab active">Sign in</button>
+          <button id="registerTab" class="tab">Create account</button>
+        </div>
+        <div class="eyebrow">DETECTIVE ACCESS</div>
+        <h2 id="authTitle">Welcome back.</h2>
+        <p id="authSubtitle" class="muted">Your case files are waiting.</p>
+
+        <form id="authForm">
+          <label id="nameLabel" class="hidden" for="codename">Detective codename</label>
+          <input id="codename" class="field hidden" maxlength="24" placeholder="Detective codename" autocomplete="nickname">
+
+          <label for="email">Email address</label>
+          <input id="email" class="field" type="email" placeholder="you@example.com" autocomplete="email" required>
+
+          <label for="password">Password</label>
+          <input id="password" class="field" type="password" minlength="8" placeholder="At least 8 characters" autocomplete="current-password" required>
+
+          <button id="authSubmit" class="btn btn-primary full" type="submit">Sign in ↗</button>
+        </form>
+
+        <div class="or"><span></span> OR CONTINUE WITH <span></span></div>
+        <button id="googleBtn" class="btn btn-google full" type="button">
+          <b class="google-letter">G</b> Continue with Google
+        </button>
+
+        <p class="fine-print">Your password is handled by Supabase Authentication. MINDCASE does not store it directly.</p>
+        <p id="authMessage" class="message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="hidden">
+      <div class="dashboard-hero">
         <div>
-          <div class="eyebrow"><span class="live-dot"></span> DETECTIVE DIVISION / ACTIVE FILE</div>
-          <h1>Trust the evidence.<br><span>Question everything.</span></h1>
-          <p>Ten cases. Countless possibilities. One sharp mind.</p>
+          <div class="eyebrow">DETECTIVE HEADQUARTERS</div>
+          <h1>Welcome in, <em id="playerName">Detective.</em></h1>
+          <p class="hero-copy">Take your time. The smallest detail can change everything.</p>
         </div>
-        <div class="detective-scene" aria-label="Animated detective scene">
-          <div class="scene-moon"></div>
-          <div class="scene-window window-one"></div>
-          <div class="scene-window window-two"></div>
-          <div class="scene-rain rain-one"></div>
-          <div class="scene-rain rain-two"></div>
-          <div class="scene-lamp"></div>
-          <div class="scene-detective">
-            <div class="detective-hat"></div>
-            <div class="detective-head"></div>
-            <div class="detective-coat"></div>
-          </div>
-          <div class="scene-desk"></div>
-          <span class="scene-label">THE OBSERVER</span>
+        <div class="rank-card">
+          <span>✦</span>
+          <div><small>CURRENT RANK</small><strong id="rank">Rookie</strong><small id="xpRank">0 XP</small></div>
         </div>
-      </section>
+      </div>
 
-      <section class="progress-section">
-        <div class="progress-top">
-          <div><span class="section-kicker">YOUR RECORD</span><h2>Detective progress</h2></div>
-          <span class="progress-fraction" id="solvedCount">0 / 10 solved</span>
-        </div>
-        <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
-        <div class="stat-grid">
-          <div class="stat-card"><span class="stat-symbol">◎</span><div><strong id="statSolved">0</strong><small>CASES SOLVED</small></div></div>
-          <div class="stat-card"><span class="stat-symbol">◆</span><div><strong id="statXP">0</strong><small>TOTAL XP</small></div></div>
-          <div class="stat-card"><span class="stat-symbol">⌁</span><div><strong id="statAccuracy">—</strong><small>FIRST-TRY RATE</small></div></div>
-        </div>
-      </section>
+      <div class="stats">
+        <article class="stat"><small>CASES SOLVED</small><strong id="solved">0</strong><span>Completed investigations</span></article>
+        <article class="stat"><small>INVESTIGATION XP</small><strong id="xp">0</strong><span>Earned through deduction</span></article>
+        <article class="stat"><small>CASE FILES</small><strong>03</strong><span>Available to investigate</span></article>
+      </div>
 
-      <section id="caseWorkspace" class="case-workspace">
-        <div class="case-heading">
-          <div>
-            <div class="case-meta"><span id="caseNumber">CASE 01</span><span class="meta-divider">/</span><span id="caseDifficulty">MODERATE</span></div>
-            <h2 id="caseTitle">The Locked Room</h2>
-            <p id="caseSubtitle" class="case-subtitle"></p>
-          </div>
-          <div class="case-status" id="caseStatus">UNSOLVED</div>
-        </div>
+      <div class="section-heading">
+        <div><div class="eyebrow">CHOOSE YOUR INVESTIGATION</div><h2>Open case files</h2></div>
+        <span class="section-label">SOLO CAMPAIGN · CHAPTER 01</span>
+      </div>
+      <div id="caseGrid" class="case-grid"></div>
 
-        <div class="story-card">
-          <div class="story-top"><span>◈ INCIDENT REPORT</span><span id="caseLocation">LOCATION: UNKNOWN</span></div>
-          <p id="caseStory"></p>
-          <div class="story-footer"><span>◷ TIMELINE UNDER REVIEW</span><span>CONFIDENTIAL</span></div>
-        </div>
+      <div class="multiplayer-banner">
+        <span class="multiplayer-icon">◎</span>
+        <div><strong>Work better together.</strong><p>Private rooms and invite codes are the next milestone. Your detective profile will carry forward.</p></div>
+        <span class="coming-soon">MULTIPLAYER · SOON</span>
+      </div>
+    </section>
 
-        <div class="investigation-grid">
-          <section class="panel">
-            <div class="panel-heading"><div class="panel-icon">⌕</div><div><h3>Evidence board</h3><p>Inspect the details carefully.</p></div></div>
-            <div id="evidenceList" class="evidence-list"></div>
-            <div id="evidenceDetail" class="detail-box">Select an evidence card to examine it.</div>
+    <section id="gameView" class="hidden">
+      <button id="backBtn" class="back-link">← Back to headquarters</button>
+      <div class="game-heading">
+        <div class="eyebrow" id="caseCategory"></div>
+        <h1 id="caseTitle"></h1>
+        <p id="caseSubtitle" class="hero-copy"></p>
+        <div class="case-meta"><span id="difficulty"></span><span>FICTIONAL CASE</span><span id="progress">0 / 4 CLUES</span></div>
+      </div>
+
+      <div class="game-layout">
+        <nav class="game-nav">
+          <button class="game-tab active" data-panel="briefing">01 <span>Briefing</span></button>
+          <button class="game-tab" data-panel="evidence">02 <span>Evidence</span><b id="clueCount">0/4</b></button>
+          <button class="game-tab" data-panel="suspects">03 <span>Suspects</span></button>
+          <button class="game-tab" data-panel="deduction">04 <span>Final deduction</span></button>
+        </nav>
+
+        <div class="game-content">
+          <section id="panel-briefing" class="game-panel">
+            <div class="eyebrow gold">THE BRIEFING</div>
+            <h2>What we know so far</h2>
+            <p id="briefing" class="story"></p>
+            <div class="objective"><strong>YOUR OBJECTIVE</strong><p>Collect evidence, compare the suspects' statements, then make the strongest accusation you can support.</p></div>
+            <button class="btn btn-primary" data-goto="evidence">Review evidence →</button>
           </section>
 
-          <section class="panel">
-            <div class="panel-heading"><div class="panel-icon">♙</div><div><h3>Persons of interest</h3><p>Every statement deserves scrutiny.</p></div></div>
-            <div id="suspectList" class="suspect-list"></div>
-            <div id="suspectDetail" class="detail-box">Select a person to review their statement.</div>
+          <section id="panel-evidence" class="game-panel hidden">
+            <div class="eyebrow gold">THE EVIDENCE ROOM</div>
+            <h2>Look closer.</h2>
+            <p class="muted">Inspect every clue. Remember what it proves — and what it doesn't.</p>
+            <div id="evidenceGrid" class="evidence-grid"></div>
+            <div id="evidenceDetail" class="evidence-detail hidden"></div>
+          </section>
+
+          <section id="panel-suspects" class="game-panel hidden">
+            <div class="eyebrow gold">PERSONS OF INTEREST</div>
+            <h2>Everyone has a version.</h2>
+            <p class="muted">Compare statements against the records. A contradiction matters only when the evidence supports it.</p>
+            <div id="suspectGrid" class="suspect-grid"></div>
+          </section>
+
+          <section id="panel-deduction" class="game-panel hidden">
+            <div class="eyebrow gold">MAKE YOUR CALL</div>
+            <h2>Put the story together.</h2>
+            <p class="muted">Choose your suspect, motive, and strongest supporting clue.</p>
+            <form id="deductionForm">
+              <div id="suspectChoices" class="suspect-choices"></div>
+              <label for="motive">What best explains the motive?</label>
+              <select id="motive" class="field" required><option value="">Choose a motive...</option></select>
+              <label for="supportingClue">Which clue best supports your conclusion?</label>
+              <select id="supportingClue" class="field" required><option value="">Choose supporting evidence...</option></select>
+              <button class="btn btn-primary" type="submit">Submit final deduction ↗</button>
+            </form>
+            <div id="result" class="result hidden" aria-live="polite"></div>
           </section>
         </div>
-
-        <section class="deduction-panel">
-          <div class="deduction-heading">
-            <div class="panel-icon target-icon">◎</div>
-            <div><h3>Make your deduction</h3><p>Choose who is responsible and the evidence that proves it.</p></div>
-          </div>
-          <div class="form-grid">
-            <label>YOUR ACCUSATION
-              <select id="accusedSelect"><option value="">Select a suspect...</option></select>
-            </label>
-            <label>KEY EVIDENCE
-              <select id="evidenceSelect"><option value="">Select evidence...</option></select>
-            </label>
-          </div>
-          <div class="action-row">
-            <button id="hintButton" class="button button-secondary">◉ Request a hint</button>
-            <button id="submitButton" class="button button-primary">Submit deduction <span>→</span></button>
-          </div>
-          <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
-          <div id="solutionBox" class="solution-box hidden"></div>
-          <div class="case-bottom-actions">
-            <button id="retryButton" class="text-button hidden">Try this case again</button>
-            <button id="nextButton" class="button button-primary hidden">Next case →</button>
-          </div>
-        </section>
-
-        <footer class="game-footer">
-          <span>MINDCASE © <span id="year"></span></span>
-          <button id="resetProgress" class="text-button">Reset all progress</button>
-        </footer>
-      </section>
+      </div>
     </section>
   </main>
 
-  <div id="toast" class="toast" role="status"></div>
-  <script src="script.js"></script>
+  <footer><span>© MINDCASE · FICTIONAL DETECTIVE STORIES</span><span>OBSERVE. CONNECT. DEDUCE.</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
-```
