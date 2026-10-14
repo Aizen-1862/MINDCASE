@@ -2,637 +2,393 @@
 (() => {
   "use strict";
 
-  const cfg = window.MINDCASE_CONFIG || {};
-  const configured = Boolean(
-    cfg.SUPABASE_URL &&
-    cfg.SUPABASE_ANON_KEY &&
-    !cfg.SUPABASE_URL.includes("PASTE_") &&
-    !cfg.SUPABASE_ANON_KEY.includes("PASTE_")
-  );
-
-  const db = configured && window.supabase
-    ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
-    : null;
-
-  const $ = id => document.getElementById(id);
-  const viewIds = ["authView", "dashboardView", "gameView"];
-
-  let user = null;
-  let profile = null;
-  let registering = false;
-  let activeCase = null;
-  let inspected = new Set();
-  let toastTimer;
+  const KEY = "mindcase_solo_progress_v1";
 
   const cases = [
     {
-      id: "last-guest",
-      number: "001",
-      category: "CRIME",
-      title: "The Last Guest",
-      subtitle: "A hotel room is empty. Three stories don't fit.",
-      difficulty: "ROOKIE",
-      mark: "01",
-      description: "A guest vanishes before checkout. Three people give conflicting accounts of the night.",
-      briefing: `At 11:20 PM, the fictional Northbridge Hotel reported that Room 408 was empty. Guest Elias Ward had checked in that afternoon and left his bag behind.
-
-The night manager says the room was already empty at 10:45 PM. The porter remembers carrying fresh towels upstairs at 11:05 PM. A visitor claims she was waiting in the lobby until midnight.
-
-Your task is to reconstruct the timeline from the records. A suspicious detail is not automatically proof of a crime.`,
-      evidence: [
-        {
-          id: "log", icon: "▤", title: "Front desk log",
-          short: "A timestamped desk record",
-          detail: "The log records a keycard reset for Room 408 at 11:12 PM using the night manager's staff code. This proves the reset was recorded, but not who physically held the card."
-        },
-        {
-          id: "lift", icon: "↟", title: "Lift maintenance note",
-          short: "A brief lift interruption",
-          detail: "The guest lift stopped between floors from 10:58 PM to 11:08 PM. The stairwell remained accessible, so a lift trip during that window was unlikely."
-        },
-        {
-          id: "receipt", icon: "▧", title: "Cafe receipt",
-          short: "A purchase across the street",
-          detail: "A receipt records two coffees at 11:16 PM, paid in cash. A cashier's note says the customer wore a porter jacket. That observation is not a verified identity."
-        },
-        {
-          id: "camera", icon: "◉", title: "Lobby camera summary",
-          short: "A gap in the recording",
-          detail: "The lobby camera has a recording gap from 11:10 PM to 11:18 PM. It cannot establish who entered or left during that interval. A gap alone does not prove tampering."
-        }
+      id:"last-guest", number:"001", title:"The Last Guest",
+      category:"CRIME", difficulty:"MODERATE", symbol:"⌁", accent:"#d9b778",
+      tag:"LOCKED ROOM",
+      short:"A collector is found unconscious after a closed-door dinner. Three guests insist they never left their seats.",
+      objective:"Find who entered the study and why the timeline does not add up.",
+      briefing:"At 9:40 PM, art collector Victor Hale was found unconscious in his locked study. Nothing valuable appears to be missing. Three people were still in the house: Mara Vale, his personal assistant; Elliot Cross, a business partner; and June Park, the chef. Each claims to have been somewhere else when the incident happened. The study uses an electronic keycard, and the system recorded one unexpected entry.",
+      evidence:[
+        {id:"log",icon:"▤",title:"Keycard Access Log",type:"DIGITAL RECORD",text:"The study lock recorded Mara Vale's card at 9:37 PM. Mara says her card was left in the staff room all evening. The system clock was checked earlier that day and was accurate to within one minute.",stamp:"TIME-STAMPED"},
+        {id:"note",icon:"✎",title:"Torn Appointment Note",type:"PAPER EVIDENCE",text:"A note in Victor's pocket reads: 'M. — study, 9:30. Bring the revised inventory.' The note is torn through the last line. The handwriting matches Victor's calendar notes, not Mara's.",stamp:"HANDWRITING VERIFIED"},
+        {id:"receipt",icon:"▧",title:"Cafe Receipt",type:"WITNESS SUPPORT",text:"Elliot presents a cafe receipt printed at 9:32 PM across town. The cafe is a twelve-minute drive away, and the payment matches his bank card. It supports his alibi, though it does not prove exactly when he left.",stamp:"ALIBI PARTLY VERIFIED"},
+        {id:"camera",icon:"◉",title:"Hall Camera Summary",type:"VIDEO SUMMARY",text:"The hallway camera shows a person carrying a folded dinner cloth entering the study corridor. The face is obscured, but the person wears the dark staff uniform issued to Mara.",stamp:"IMAGE INCONCLUSIVE"}
       ],
-      suspects: [
-        {
-          id: "mara", name: "Mara Voss", role: "NIGHT MANAGER",
-          statement: "I checked the floor at 10:45 PM. Room 408 was already empty. I stayed at the desk after that.",
-          note: "Had access to staff codes."
-        },
-        {
-          id: "leon", name: "Leon Pike", role: "HOTEL PORTER",
-          statement: "I took towels upstairs around 11:05 PM, but the lift was working when I arrived. I didn't go near the cafe.",
-          note: "Wears a porter jacket."
-        },
-        {
-          id: "nina", name: "Nina Vale", role: "VISITOR",
-          statement: "I waited in the lobby until midnight. I never went upstairs, and I didn't leave the hotel.",
-          note: "Her visit was not in the guest register."
-        }
+      suspects:[
+        {id:"mara",name:"Mara Vale",role:"PERSONAL ASSISTANT",initial:"M",statement:"I never went near the study. My access card was in the staff room. I was folding linen before dinner service ended."},
+        {id:"elliot",name:"Elliot Cross",role:"BUSINESS PARTNER",initial:"E",statement:"Victor and I argued about the collection, but I left before nine-thirty. I had no reason to return."},
+        {id:"june",name:"June Park",role:"HEAD CHEF",initial:"J",statement:"I was cleaning the kitchen. I carried linen to the corridor once, but I never entered the study."}
       ],
-      motives: [
-        { id: "cover", label: "Concealing an unauthorized room entry" },
-        { id: "theft", label: "Taking a guest's belongings" },
-        { id: "mistake", label: "An ordinary scheduling mistake" }
+      motives:[
+        {id:"cover",label:"Cover up a changed inventory"},
+        {id:"theft",label:"Steal a valuable painting"},
+        {id:"revenge",label:"Settle a personal grudge"}
       ],
-      correctSuspect: "mara",
-      correctMotive: "cover",
-      correctEvidence: "log",
-      explanation: "The keycard reset for Room 408 was recorded at 11:12 PM using Mara's staff code, contradicting the impression that the room was already settled. This makes Mara the intended answer for the room-entry cover-up. It does not prove exactly what happened to Elias Ward. The other clues are suggestive, but weaker.",
-      hint: "Compare each person's timeline with the timestamped records. Prefer a record over an unverified observation."
+      evidenceChoices:[
+        {id:"log",label:"Keycard access log"},
+        {id:"note",label:"Torn appointment note"},
+        {id:"receipt",label:"Cafe receipt"},
+        {id:"camera",label:"Hall camera summary"}
+      ],
+      answer:{suspect:"mara",motive:"cover",evidence:"log"},
+      explanation:"The keycard log places Mara's card at the study at 9:37 PM, contradicting her claim that she never went near it. Victor's note points to a meeting about the revised inventory. The strongest theory is that Mara entered to conceal a change in the inventory, then tried to hide behind the card's supposed location.",
+      hint:"Compare the access record with each person's exact claim. Then ask which clue explains Victor's meeting about the inventory."
     },
     {
-      id: "perfect-alibi",
-      number: "002",
-      category: "PSYCHOLOGICAL",
-      title: "The Perfect Alibi",
-      subtitle: "A witness remembers everything — perhaps too neatly.",
-      difficulty: "INVESTIGATOR",
-      mark: "02",
-      description: "A detailed account seems airtight, until the sequence of events is checked.",
-      briefing: `At a private gallery, a signed sketch disappeared during a ten-minute power interruption. Curator Adrian says he was in the archive from 8:00 to 8:20 PM and gives a precise account of every minute.
-
-Two other staff members disagree about when they saw him. Your task is to evaluate the statements carefully: confidence is not the same as accuracy, and a mismatch matters only when records support it.`,
-      evidence: [
-        {
-          id: "clock", icon: "◷", title: "Gallery clock photo",
-          short: "Time shown in a visitor photo",
-          detail: "A visitor's photo shows the gallery clock at 8:14 PM. The clock was later found to run six minutes fast, making the corrected time approximately 8:08 PM."
-        },
-        {
-          id: "badge", icon: "▣", title: "Archive access record",
-          short: "A badge entry at 8:11 PM",
-          detail: "The archive reader recorded Adrian's badge at 8:11 PM. Its clock is synchronized to the building server. It proves the badge was used, but not who carried it."
-        },
-        {
-          id: "note", icon: "✎", title: "Curator's written timeline",
-          short: "A minute-by-minute account",
-          detail: "Adrian wrote that he entered the archive at 8:02 PM and did not touch his badge again that evening. The 8:11 PM record conflicts with that exact claim, although someone else could theoretically have used his badge."
-        },
-        {
-          id: "outage", icon: "ϟ", title: "Power interruption report",
-          short: "Lights out for ten minutes",
-          detail: "The building report records an interruption from 8:06 to 8:16 PM. Battery-backed access readers continued to operate, so the interruption does not explain away the 8:11 PM event."
-        }
+      id:"perfect-alibi", number:"002", title:"The Perfect Alibi",
+      category:"PSYCHOLOGICAL", difficulty:"CHALLENGING", symbol:"◷",
+      accent:"#83b8d7", tag:"FALSE TIMELINE",
+      short:"A priceless museum exhibit disappears during a power cut. One suspect's alibi sounds too perfect.",
+      objective:"Find the contradiction between the timeline and the physical evidence.",
+      briefing:"A rare watch disappeared from a museum's locked display during a seven-minute power interruption. The display was not forced. Curator Adrian Shaw says he was in the public gallery with visitors the entire time. Security officer Lena Ortiz was checking the backup generator, while archivist Noah Bell says he was in the basement. The watch's display case was reopened using an authorized override.",
+      evidence:[
+        {id:"clock",icon:"◷",title:"Gallery Clock Photo",type:"PHOTOGRAPH",text:"A visitor's photo shows the gallery clock at 8:14 PM. The power interruption began at 8:10 and ended at 8:17. The clock runs on an independent battery, so it continued to display the correct time.",stamp:"INDEPENDENT CLOCK"},
+        {id:"note",icon:"▤",title:"Override Access Note",type:"SECURITY RECORD",text:"The display case override was entered at 8:12 PM using the curator's personal authorization code. The code was not shared with the security team. The system records a successful override, not merely an attempt.",stamp:"AUTHORIZED ACCESS"},
+        {id:"timeline",icon:"✎",title:"Curator's Timeline",type:"WRITTEN STATEMENT",text:"Adrian says he was visible in the gallery from 8:05 to 8:20 PM and never approached the display. But the visitor photo at 8:14 shows the spot where Adrian claims he stood is empty. He later says the photo must be from another night.",stamp:"STATEMENT CONFLICT"},
+        {id:"power",icon:"ϟ",title:"Generator Report",type:"TECHNICAL REPORT",text:"The generator report confirms the seven-minute outage. The backup system did not reset the display's access log. The outage explains the dark cameras, but not the valid override code.",stamp:"SYSTEM CHECKED"}
       ],
-      suspects: [
-        {
-          id: "adrian", name: "Adrian Cole", role: "CURATOR",
-          statement: "I entered the archive at 8:02 PM. I did not use my badge again that evening, and I stayed inside until the lights returned.",
-          note: "Wrote the detailed timeline."
-        },
-        {
-          id: "bea", name: "Bea Lin", role: "GALLERY ASSISTANT",
-          statement: "I saw Adrian near the archive door after the lights went out, but I didn't see whether he entered.",
-          note: "Was checking the public gallery."
-        },
-        {
-          id: "owen", name: "Owen Hart", role: "SECURITY OFFICER",
-          statement: "I stayed at the front entrance throughout the interruption. I did not enter the archive corridor.",
-          note: "His patrol log has no missing entry."
-        }
+      suspects:[
+        {id:"adrian",name:"Adrian Shaw",role:"MUSEUM CURATOR",initial:"A",statement:"I was in the gallery the entire time. The case override must have been a system fault during the outage."},
+        {id:"lena",name:"Lena Ortiz",role:"SECURITY OFFICER",initial:"L",statement:"I was at the generator panel. I can explain the power cut, but I do not have the curator's override code."},
+        {id:"noah",name:"Noah Bell",role:"ARCHIVIST",initial:"N",statement:"I was in the basement cataloguing. I heard the alarm, but I never went upstairs."}
       ],
-      motives: [
-        { id: "prestige", label: "Protecting professional reputation" },
-        { id: "prank", label: "Playing a harmless practical joke" },
-        { id: "weather", label: "Avoiding the rain outside" }
+      motives:[
+        {id:"prestige",label:"Protect reputation and prestige"},
+        {id:"money",label:"Sell the watch for money"},
+        {id:"accident",label:"Cover up accidental damage"}
       ],
-      correctSuspect: "adrian",
-      correctMotive: "prestige",
-      correctEvidence: "note",
-      explanation: "The strongest contradiction is between Adrian's claim that he did not use his badge again and the synchronized 8:11 PM record. Adrian is the intended answer. The motive is an inference, not a timestamped fact, and the record alone cannot prove who physically used the badge.",
-      hint: "Separate what a record proves from what you infer. Confidence is not evidence."
+      evidenceChoices:[
+        {id:"clock",label:"Gallery clock photo"},
+        {id:"note",label:"Override access note"},
+        {id:"timeline",label:"Curator's timeline"},
+        {id:"power",label:"Generator report"}
+      ],
+      answer:{suspect:"adrian",motive:"prestige",evidence:"note"},
+      explanation:"Only Adrian's authorization code opened the display, and the override succeeded during the outage. The visitor photo also contradicts his claim that he stood in the gallery the entire time. Protecting his reputation is the strongest motive supported by the story.",
+      hint:"An outage explains missing camera footage, but does it explain a valid personal authorization code? Check which statement is contradicted by the photo."
     },
     {
-      id: "silent-witness",
-      number: "003",
-      category: "HYBRID MYSTERY",
-      title: "The Silent Witness",
-      subtitle: "Three people describe the same moment differently.",
-      difficulty: "DETECTIVE",
-      mark: "03",
-      description: "A remote cabin, a stormy evening, and three memories that cannot all be right.",
-      briefing: `At a fictional lakeside research cabin, a sealed field notebook was found outside the locked study after a storm. No one was hurt.
-
-Researcher Imani, caretaker Tomas, and journalist Jules each insist they saw the notebook in a different place shortly before the storm. Determine whose account is most inconsistent with the physical record, without assuming more than the clues can support.`,
-      evidence: [
-        {
-          id: "mud", icon: "⌁", title: "Mud trace",
-          short: "A partial print by the side door",
-          detail: "A muddy partial shoe print was found inside the side entrance. Rain began at 9:18 PM. The print is consistent with someone entering after rain began, but it cannot identify a person."
-        },
-        {
-          id: "window", icon: "▱", title: "Window latch",
-          short: "Latch found closed from inside",
-          detail: "The study window latch was found closed. A caretaker's checklist at 9:00 PM also says it was closed. This weakens the idea that the notebook was blown through the window, but does not identify who moved it."
-        },
-        {
-          id: "journal", icon: "▤", title: "Research journal",
-          short: "A note written at 9:10 PM",
-          detail: "Imani's journal says the notebook was on the study desk at 9:10 PM. The timestamp comes from an offline device checked that morning, so it is useful but not perfectly independent."
-        },
-        {
-          id: "checklist", icon: "☷", title: "Caretaker checklist",
-          short: "A signed room check",
-          detail: "Tomas signed a checklist at 9:15 PM stating that the desk was clear except for a lamp and cup. This conflicts with Imani's earlier journal entry unless one timestamp or observation is wrong."
-        }
+      id:"silent-witness", number:"003", title:"The Silent Witness",
+      category:"HYBRID MYSTERY", difficulty:"EXPERT", symbol:"◈",
+      accent:"#b7a2df", tag:"HIDDEN MOTIVE",
+      short:"A research notebook vanishes from a remote cabin. Muddy footprints and a witness tell different stories.",
+      objective:"Separate the misleading trail from the clue that reveals the real reason.",
+      briefing:"A research notebook vanished from a locked cabin during a storm. It contained observations that could expose a serious mistake in a conservation project. Three people had access: researcher Tomas Reed, land manager Evelyn Hart, and caretaker Sam Dyer. Muddy footprints lead toward a rear window, but its latch is intact. No one admits entering the cabin after sunset.",
+      evidence:[
+        {id:"mud",icon:"⌁",title:"Muddy Footprints",type:"SCENE OBSERVATION",text:"Footprints lead from the rear window toward the path, but the mud pattern is shallow and ends abruptly under the eaves. Rain fell heavily before the notebook was reported missing. The prints may have been made earlier and do not prove someone used the window that night.",stamp:"TRAIL UNCONFIRMED"},
+        {id:"latch",icon:"▣",title:"Window Latch",type:"PHYSICAL EVIDENCE",text:"The rear window latch is dusty and undamaged. A thin line of dust crosses the latch without a break. The window was almost certainly not opened during the incident, making the footprints misleading.",stamp:"NO FORCED ENTRY"},
+        {id:"journal",icon:"✎",title:"Research Journal",type:"DOCUMENT",text:"A page left in the cabin says Tomas discovered a flaw in the project's water sampling method. A margin note reads: 'If this goes public, the whole report will be withdrawn.' The note does not say who removed the notebook.",stamp:"MOTIVE CONTEXT"},
+        {id:"checklist",icon:"☷",title:"Caretaker Checklist",type:"ROUTINE RECORD",text:"Sam's nightly checklist notes that Tomas requested the spare key at 7:10 PM to correct a page in the notebook. Sam recorded the key's return at 7:28 PM, but the cabin inventory was not checked until morning. Tomas was the only person documented with key access after sunset.",stamp:"KEY MOVEMENT RECORDED"}
       ],
-      suspects: [
-        {
-          id: "imani", name: "Imani Rao", role: "RESEARCHER",
-          statement: "I wrote at 9:10 PM that the notebook was on the desk. I did not leave the study after that.",
-          note: "Kept the notebook for her research."
-        },
-        {
-          id: "tomas", name: "Tomas Reed", role: "CARETAKER",
-          statement: "I checked the room at 9:15 PM. The desk was clear, and I signed the checklist immediately afterward.",
-          note: "Responsible for the building checklist."
-        },
-        {
-          id: "jules", name: "Jules Mercer", role: "JOURNALIST",
-          statement: "I saw the notebook beside the door before the storm. I never entered the study.",
-          note: "Was visiting to interview the researcher."
-        }
+      suspects:[
+        {id:"tomas",name:"Tomas Reed",role:"FIELD RESEARCHER",initial:"T",statement:"I only corrected a page and returned the key. I never took the notebook. I was trying to fix the research before anyone saw the mistake."},
+        {id:"evelyn",name:"Evelyn Hart",role:"LAND MANAGER",initial:"E",statement:"The project matters to the whole region. I had no reason to go into the cabin during a storm."},
+        {id:"sam",name:"Sam Dyer",role:"CABIN CARETAKER",initial:"S",statement:"I lock up at sunset. I recorded the key return, but I did not check the notebook's location that evening."}
       ],
-      motives: [
-        { id: "attention", label: "Creating a misleading story for attention" },
-        { id: "protect", label: "Protecting a private research result" },
-        { id: "routine", label: "Following ordinary cabin procedures" }
+      motives:[
+        {id:"protect",label:"Protect himself from the research error"},
+        {id:"profit",label:"Sell the notebook for profit"},
+        {id:"revenge",label:"Punish the land manager"}
       ],
-      correctSuspect: "tomas",
-      correctMotive: "protect",
-      correctEvidence: "checklist",
-      explanation: "Tomas's signed checklist conflicts with Imani's 9:10 PM journal entry. Tomas is the intended answer for further scrutiny, with the checklist as the key clue. The evidence does not conclusively establish who moved the notebook or why.",
-      hint: "Find the two records that make incompatible claims about the same object. A contradiction narrows possibilities; it does not prove every part of a theory."
+      evidenceChoices:[
+        {id:"mud",label:"Muddy footprints"},
+        {id:"latch",label:"Window latch"},
+        {id:"journal",label:"Research journal page"},
+        {id:"checklist",label:"Caretaker checklist"}
+      ],
+      answer:{suspect:"tomas",motive:"protect",evidence:"checklist"},
+      explanation:"The intact dusty latch undermines the idea of a window entry. The caretaker's checklist places the spare key with Tomas after sunset, and the journal reveals why he feared the notebook becoming public. The checklist is the strongest direct link between Tomas and access to the cabin.",
+      hint:"The most dramatic clue is not always the most reliable. Which record connects someone to the cabin after sunset, and which clue explains why the notebook mattered?"
     }
   ];
 
-  function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, c => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    })[c]);
+  const $ = id => document.getElementById(id);
+  let state = loadState();
+  let current = null;
+  let toastTimer;
+
+  function loadState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY) || "{}");
+      return {
+        xp: Number.isFinite(s.xp) ? Math.max(0,s.xp) : 0,
+        solved: Array.isArray(s.solved) ? s.solved.filter(id => cases.some(c => c.id === id)) : [],
+        reviewed: s.reviewed && typeof s.reviewed === "object" ? s.reviewed : {}
+      };
+    } catch {
+      return {xp:0,solved:[],reviewed:{}};
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY,JSON.stringify(state));
+    } catch {
+      toast("Browser storage is unavailable. Progress may not save.");
+    }
+  }
+
+  function rank() {
+    if (state.xp >= 300) return "MASTER DETECTIVE";
+    if (state.xp >= 200) return "DETECTIVE";
+    if (state.xp >= 100) return "INVESTIGATOR";
+    return "ROOKIE";
+  }
+
+  function updateStats() {
+    $("homeSolved").textContent = state.solved.length;
+    $("homeXP").textContent = state.xp;
+    $("homeRank").textContent = rank();
+    $("playerXP").textContent = `${state.xp} XP`;
+    $("playerRank").textContent = `${rank().toLowerCase()} · ${state.solved.length} solved`;
   }
 
   function showView(id) {
-    viewIds.forEach(view => $(view).classList.toggle("hidden", view !== id));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    $(id).classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+    if (id === "archive") renderCases();
+    updateStats();
   }
 
-  function message(text, type = "") {
-    $("authMessage").textContent = text;
-    $("authMessage").className = "message " + type;
-  }
-
-  function toast(text) {
-    const el = $("toast");
-    el.textContent = text;
-    el.classList.add("show");
+  function toast(message) {
+    $("toast").textContent = message;
+    $("toast").classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
+    toastTimer = setTimeout(() => $("toast").classList.remove("show"),2600);
   }
 
-  function connection(text) {
-    $("connection").textContent = "● " + text;
-  }
+  function renderCases() {
+    const grid = $("caseGrid");
+    grid.replaceChildren();
 
-  function setAuthMode(createAccount) {
-    registering = createAccount;
-    $("loginTab").classList.toggle("active", !createAccount);
-    $("registerTab").classList.toggle("active", createAccount);
-    $("nameLabel").classList.toggle("hidden", !createAccount);
-    $("codename").classList.toggle("hidden", !createAccount);
-    $("codename").required = createAccount;
-    $("password").autocomplete = createAccount ? "new-password" : "current-password";
-    $("authTitle").textContent = createAccount ? "Begin your file." : "Welcome back.";
-    $("authSubtitle").textContent = createAccount
-      ? "Create your detective identity."
-      : "Your case files are waiting.";
-    $("authSubmit").textContent = createAccount ? "Create account ↗" : "Sign in ↗";
-    message("");
-  }
-
-  function rankName(xp) {
-    if (xp >= 600) return "Mastermind";
-    if (xp >= 300) return "Detective";
-    if (xp >= 120) return "Investigator";
-    return "Rookie";
-  }
-
-  async function fetchProfile(authUser) {
-    const { data, error } = await db
-      .from("profiles")
-      .select("id,display_name,xp,solved_cases")
-      .eq("id", authUser.id)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) {
-      throw new Error("Your profile was not created. Check that schema.sql ran successfully.");
-    }
-    return data;
-  }
-
-  async function enterApp(authUser) {
-    user = authUser;
-    $("signOut").classList.remove("hidden");
-    connection("SIGNED IN");
-
-    try {
-      profile = await fetchProfile(authUser);
-      renderDashboard();
-      showView("dashboardView");
-    } catch (err) {
-      console.error(err);
-      showView("authView");
-      message(err.message || "Could not load your profile.", "error");
-    }
-  }
-
-  function renderDashboard() {
-    const xp = Number(profile?.xp || 0);
-    const solved = Array.isArray(profile?.solved_cases) ? profile.solved_cases : [];
-
-    $("playerName").textContent = (profile?.display_name || "Detective") + ".";
-    $("rank").textContent = rankName(xp);
-    $("xpRank").textContent = xp + " XP";
-    $("xp").textContent = xp;
-    $("solved").textContent = solved.length;
-
-    $("caseGrid").innerHTML = cases.map((c, index) => {
-      const completed = solved.includes(c.id);
-      return `
-        <article class="case-card">
-          <div class="case-art art-${index + 1}" data-mark="${c.mark}"></div>
-          <div class="case-body">
-            <span class="case-label">CASE ${c.number} · ${escapeHTML(c.category)}</span>
-            <h3>${escapeHTML(c.title)}</h3>
-            <p>${escapeHTML(c.description)}</p>
-            <div class="case-bottom">
-              <span class="difficulty">${c.difficulty}${completed ? " · SOLVED ✓" : ""}</span>
-              <button class="case-open" data-case="${c.id}">${completed ? "Replay ↗" : "Open file ↗"}</button>
-            </div>
-          </div>
-        </article>`;
-    }).join("");
+    cases.forEach(c => {
+      const solved = state.solved.includes(c.id);
+      const card = document.createElement("article");
+      card.className = `case-card${solved ? " solved" : ""}`;
+      card.style.setProperty("--accent",c.accent);
+      card.tabIndex = 0;
+      card.setAttribute("role","button");
+      card.setAttribute("aria-label",`Open ${c.title}`);
+      card.innerHTML = `
+        <div class="case-top"><span>FILE / ${c.number}</span><span class="case-tag">${c.tag}</span></div>
+        <div class="case-symbol">${c.symbol}</div>
+        <h3>${c.title}</h3><p>${c.short}</p>
+        <div class="case-bottom"><span>${c.difficulty}</span><strong>${solved ? "✓ SOLVED" : "OPEN FILE ↗"}</strong></div>`;
+      card.addEventListener("click",() => openCase(c.id));
+      card.addEventListener("keydown",e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openCase(c.id);
+        }
+      });
+      grid.appendChild(card);
+    });
   }
 
   function openCase(id) {
-    activeCase = cases.find(c => c.id === id);
-    if (!activeCase) return;
+    current = cases.find(c => c.id === id);
+    if (!current) return;
 
-    inspected = new Set();
-    $("caseCategory").textContent = `CASE ${activeCase.number} · ${activeCase.category}`;
-    $("caseTitle").textContent = activeCase.title;
-    $("caseSubtitle").textContent = activeCase.subtitle;
-    $("difficulty").textContent = activeCase.difficulty;
-    $("briefing").textContent = activeCase.briefing;
-
-    $("motive").innerHTML = '<option value="">Choose a motive...</option>' +
-      activeCase.motives.map(m => `<option value="${m.id}">${escapeHTML(m.label)}</option>`).join("");
-
-    $("supportingClue").innerHTML = '<option value="">Choose supporting evidence...</option>' +
-      activeCase.evidence.map(e => `<option value="${e.id}">${escapeHTML(e.title)}</option>`).join("");
-
-    $("suspectChoices").innerHTML = activeCase.suspects.map(s => `
-      <label class="suspect-choice">
-        <input type="radio" name="suspect" value="${s.id}" required>
-        <span>${escapeHTML(s.name)}<br><small>${escapeHTML(s.role)}</small></span>
-      </label>`).join("");
-
-    $("suspectGrid").innerHTML = activeCase.suspects.map(s => `
-      <article class="suspect-card">
-        <h3>${escapeHTML(s.name)}</h3>
-        <span class="suspect-role">${escapeHTML(s.role)}</span>
-        <p>“${escapeHTML(s.statement)}”</p>
-        <small>FILE NOTE: ${escapeHTML(s.note)}</small>
-      </article>`).join("");
-
+    $("caseFile").textContent = `CASE FILE ${current.number}`;
+    $("fileNumber").textContent = current.number;
+    $("sideTitle").textContent = current.title;
+    $("difficulty").textContent = current.difficulty;
+    $("category").textContent = current.category;
+    $("objective").textContent = current.objective;
+    $("briefingText").textContent = current.briefing;
+    $("verdict").className = "verdict hidden";
     $("deductionForm").reset();
-    $("result").className = "result hidden";
-    $("result").innerHTML = "";
-    $("evidenceDetail").classList.add("hidden");
     renderEvidence();
-    switchPanel("briefing");
-    showView("gameView");
+    renderSuspects();
+    renderChoices();
+    updateClueCount();
+    setPhase("briefing");
+    showView("game");
+  }
+
+  function reviewedIds() {
+    if (!Array.isArray(state.reviewed[current.id])) state.reviewed[current.id] = [];
+    return state.reviewed[current.id];
+  }
+
+  function updateClueCount() {
+    $("clueCount").textContent = reviewedIds().length;
   }
 
   function renderEvidence() {
-    $("evidenceGrid").innerHTML = activeCase.evidence.map(e => `
-      <button class="evidence-card ${inspected.has(e.id) ? "selected" : ""}" data-evidence="${e.id}">
-        <i>${e.icon}</i>
-        <strong>${escapeHTML(e.title)}</strong>
-        <small>${inspected.has(e.id) ? "INSPECTED · " : ""}${escapeHTML(e.short)}</small>
-      </button>`).join("");
+    const list = $("evidenceList");
+    list.replaceChildren();
 
-    $("clueCount").textContent = `${inspected.size}/${activeCase.evidence.length}`;
-    $("progress").textContent = `${inspected.size} / ${activeCase.evidence.length} CLUES`;
+    current.evidence.forEach(item => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "evidence-item";
+      button.dataset.id = item.id;
+      button.innerHTML = `<span class="evidence-icon">${item.icon}</span><span><strong>${item.title}</strong><small>${item.type}</small></span>`;
+      button.addEventListener("click",() => inspectEvidence(item.id));
+      list.appendChild(button);
+    });
+
+    $("evidenceDetail").innerHTML = `<small>SELECT AN EVIDENCE FILE</small><p>Choose an item to inspect it.</p><p><b>Investigator's hint:</b> ${current.hint}</p>`;
   }
 
   function inspectEvidence(id) {
-    const evidence = activeCase.evidence.find(e => e.id === id);
-    if (!evidence) return;
+    const item = current.evidence.find(e => e.id === id);
+    if (!item) return;
 
-    inspected.add(id);
-    renderEvidence();
+    const reviewed = reviewedIds();
+    if (!reviewed.includes(id)) {
+      reviewed.push(id);
+      save();
+    }
 
-    $("evidenceDetail").innerHTML =
-      `<strong>FILE NOTE · ${escapeHTML(evidence.title.toUpperCase())}</strong>
-       <p>${escapeHTML(evidence.detail)}</p>`;
-    $("evidenceDetail").classList.remove("hidden");
+    document.querySelectorAll(".evidence-item").forEach(button => {
+      const active = button.dataset.id === id;
+      button.classList.toggle("selected",active);
+      const oldCheck = button.querySelector(".check");
+      if (oldCheck) oldCheck.remove();
+      if (reviewed.includes(button.dataset.id)) {
+        const check = document.createElement("span");
+        check.className = "check";
+        check.textContent = "✓";
+        button.appendChild(check);
+      }
+    });
+
+    $("evidenceDetail").innerHTML = `
+      <small>${item.type}</small><h3>${item.title}</h3>
+      <p>${item.text}</p><span class="stamp">${item.stamp}</span>`;
+    updateClueCount();
   }
 
-  function switchPanel(name) {
-    document.querySelectorAll(".game-tab").forEach(btn =>
-      btn.classList.toggle("active", btn.dataset.panel === name)
-    );
-    document.querySelectorAll(".game-panel").forEach(panel =>
-      panel.classList.toggle("hidden", panel.id !== "panel-" + name)
-    );
+  function renderSuspects() {
+    const grid = $("suspectGrid");
+    grid.replaceChildren();
+
+    current.suspects.forEach(s => {
+      const card = document.createElement("article");
+      card.className = "suspect-card";
+      card.innerHTML = `
+        <div class="suspect-head"><div class="suspect-avatar">${s.initial}</div>
+        <div><h3>${s.name}</h3><small>${s.role}</small></div></div>
+        <p>${s.statement}</p>`;
+      grid.appendChild(card);
+    });
   }
 
-  async function submitDeduction(event) {
+  function fillSelect(id,items,placeholder) {
+    const select = $(id);
+    select.replaceChildren();
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = placeholder;
+    select.appendChild(first);
+
+    items.forEach(item => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.label || item.name;
+      select.appendChild(option);
+    });
+  }
+
+  function renderChoices() {
+    fillSelect("suspectChoice",current.suspects,"Select a suspect");
+    fillSelect("motiveChoice",current.motives,"Select a motive");
+    fillSelect("evidenceChoice",current.evidenceChoices,"Select evidence");
+  }
+
+  function setPhase(phase) {
+    const details = {
+      briefing:["01 / 04","✦ CASE BRIEFING","The facts so far.",25],
+      evidence:["02 / 04","✦ EVIDENCE REVIEW","Look closer.",50],
+      suspects:["03 / 04","✦ SUSPECT INTERVIEWS","Everyone has a story.",75],
+      deduction:["04 / 04","✦ FINAL DEDUCTION","Connect the evidence.",100]
+    };
+    const info = details[phase];
+    if (!info) return;
+
+    $("stepLabel").textContent = info[0];
+    $("phaseKicker").textContent = info[1];
+    $("phaseTitle").textContent = info[2];
+    $("progressFill").style.width = `${info[3]}%`;
+
+    ["briefing","evidence","suspects","deduction"].forEach(name => {
+      $(`${name}Panel`).classList.toggle("hidden",name !== phase);
+    });
+
+    if (phase === "evidence") renderEvidence();
+    if (phase === "deduction") $("verdict").classList.add("hidden");
+  }
+
+  function submitDeduction(event) {
     event.preventDefault();
-    if (!activeCase || !user) return;
+    if (!current) return;
 
-    const suspect = new FormData($("deductionForm")).get("suspect");
-    const motive = $("motive").value;
-    const evidence = $("supportingClue").value;
-
+    const suspect = $("suspectChoice").value;
+    const motive = $("motiveChoice").value;
+    const evidence = $("evidenceChoice").value;
     if (!suspect || !motive || !evidence) {
-      toast("Choose a suspect, motive, and supporting clue.");
+      toast("Complete all three parts of your deduction.");
       return;
     }
 
-    const submitButton = $("deductionForm").querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.textContent = "Checking deduction...";
+    const answer = current.answer;
+    const correct = suspect === answer.suspect &&
+      motive === answer.motive && evidence === answer.evidence;
+    const box = $("verdict");
+    box.className = `verdict${correct ? "" : " wrong"}`;
 
-    try {
-      const { data, error } = await db.rpc("submit_case_deduction", {
-        p_case_id: activeCase.id,
-        p_suspect: suspect,
-        p_motive: motive,
-        p_evidence: evidence
-      });
-
-      if (error) throw error;
-
-      const result = data;
-      const correct = Boolean(result.correct);
-      const suspectName = activeCase.suspects.find(s => s.id === activeCase.correctSuspect)?.name || "Unknown";
-
-      $("result").className = "result " + (correct ? "correct" : "");
-      $("result").innerHTML = `
-        <h3>${correct ? "Case deduction accepted." : "The evidence tells another story."}</h3>
-        <p>${correct
-          ? "Your suspect, motive, and evidence match the intended solution."
-          : "Your theory does not match the strongest-supported solution. Review the timeline and try again."}</p>
-        <p><strong>CASE FILE CONCLUSION:</strong> ${escapeHTML(suspectName)} is the intended answer. ${escapeHTML(activeCase.explanation)}</p>
-        <p><strong>DETECTIVE TIP:</strong> ${escapeHTML(activeCase.hint)}</p>
-        <p><strong>XP EARNED:</strong> ${Number(result.earned_xp || 0)} · <strong>TOTAL XP:</strong> ${Number(result.total_xp || 0)}</p>
-        <button id="returnHQ" class="btn btn-primary" type="button">Return to headquarters ↗</button>`;
-
-      $("result").classList.remove("hidden");
-      $("result").scrollIntoView({ behavior: "smooth", block: "start" });
-
-      profile = await fetchProfile(user);
-      renderDashboard();
-
-      $("returnHQ").addEventListener("click", () => showView("dashboardView"));
-      if (correct && result.earned_xp > 0) toast("+100 XP — case solved!");
-      else if (correct) toast("Case replayed. No extra completion XP.");
-      else toast("Deduction recorded. Review the clues and try again.");
-    } catch (err) {
-      console.error(err);
-      toast("Could not check the deduction. Verify your Supabase setup.");
-      $("result").className = "result";
-      $("result").innerHTML = `<p>${escapeHTML(err.message || "A database error occurred.")}</p>`;
-      $("result").classList.remove("hidden");
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = "Submit final deduction ↗";
-    }
-  }
-
-  async function handleAuth(event) {
-    event.preventDefault();
-
-    if (!db) {
-      $("setupNotice").classList.remove("hidden");
-      message("Connect Supabase first. Follow the setup instructions below.", "error");
-      return;
-    }
-
-    const email = $("email").value.trim();
-    const password = $("password").value;
-    const name = $("codename").value.trim();
-
-    if (password.length < 8) {
-      message("Use a password with at least 8 characters.", "error");
-      return;
-    }
-
-    if (registering && name.length < 2) {
-      message("Your detective codename must have at least 2 characters.", "error");
-      return;
-    }
-
-    const submit = $("authSubmit");
-    submit.disabled = true;
-    submit.textContent = registering ? "Creating account..." : "Signing in...";
-    message("");
-
-    try {
-      if (registering) {
-        const { data, error } = await db.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { display_name: name },
-            emailRedirectTo: window.location.href.split("#")[0]
-          }
-        });
-        if (error) throw error;
-
-        if (data.session && data.user) {
-          await enterApp(data.user);
-          toast("Welcome to MINDCASE, Detective.");
-        } else {
-          message("Account created. Check your email to confirm it, then sign in.", "success");
-        }
-      } else {
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        await enterApp(data.user);
+    if (correct) {
+      const alreadySolved = state.solved.includes(current.id);
+      if (!alreadySolved) {
+        state.solved.push(current.id);
+        state.xp += 100;
+        save();
       }
-    } catch (err) {
-      message(err.message || "Authentication failed. Try again.", "error");
-    } finally {
-      submit.disabled = false;
-      submit.textContent = registering ? "Create account ↗" : "Sign in ↗";
-    }
-  }
-
-  async function googleSignIn() {
-    if (!db) {
-      $("setupNotice").classList.remove("hidden");
-      message("Connect Supabase first, then configure Google OAuth.", "error");
-      return;
-    }
-
-    try {
-      const { error } = await db.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.href.split("#")[0] }
-      });
-      if (error) throw error;
-    } catch (err) {
-      message("Google sign-in failed: " + (err.message || "check OAuth settings"), "error");
-    }
-  }
-
-  async function signOut() {
-    if (!db) return;
-    const { error } = await db.auth.signOut();
-    if (error) {
-      toast("Could not sign out. Please retry.");
-      return;
-    }
-    user = null;
-    profile = null;
-    $("signOut").classList.add("hidden");
-    connection("SIGNED OUT");
-    setAuthMode(false);
-    showView("authView");
-  }
-
-  function bindEvents() {
-    $("loginTab").addEventListener("click", () => setAuthMode(false));
-    $("registerTab").addEventListener("click", () => setAuthMode(true));
-    $("authForm").addEventListener("submit", handleAuth);
-    $("googleBtn").addEventListener("click", googleSignIn);
-    $("signOut").addEventListener("click", signOut);
-
-    $("homeLink").addEventListener("click", event => {
-      event.preventDefault();
-      if (user && profile) showView("dashboardView");
-    });
-
-    $("caseGrid").addEventListener("click", event => {
-      const button = event.target.closest("[data-case]");
-      if (button) openCase(button.dataset.case);
-    });
-
-    $("backBtn").addEventListener("click", () => showView("dashboardView"));
-
-    document.querySelectorAll(".game-tab").forEach(button =>
-      button.addEventListener("click", () => switchPanel(button.dataset.panel))
-    );
-
-    document.querySelectorAll("[data-goto]").forEach(button =>
-      button.addEventListener("click", () => switchPanel(button.dataset.goto))
-    );
-
-    $("evidenceGrid").addEventListener("click", event => {
-      const button = event.target.closest("[data-evidence]");
-      if (button) inspectEvidence(button.dataset.evidence);
-    });
-
-    $("deductionForm").addEventListener("submit", submitDeduction);
-  }
-
-  async function init() {
-    bindEvents();
-    setAuthMode(false);
-
-    if (!db) {
-      connection("SETUP REQUIRED");
-      $("setupNotice").classList.remove("hidden");
-      return;
-    }
-
-    connection("CONNECTING");
-
-    const { data, error } = await db.auth.getSession();
-
-    if (error) {
-      connection("CONNECTION ERROR");
-      message("Could not restore your session. Refresh the page and try again.", "error");
-      return;
-    }
-
-    if (data.session?.user) {
-      await enterApp(data.session.user);
+      box.innerHTML = `
+        <h3>${alreadySolved ? "Case reopened. Your verdict stands." : "Deduction confirmed."}</h3>
+        <p>${current.explanation}</p>
+        <div class="reward">${alreadySolved ? "ALREADY CREDITED · NO EXTRA XP" : "+100 XP · CASE SOLVED"}</div>`;
+      toast(alreadySolved ? "You've already earned XP for this case." : "Excellent work. +100 XP earned!");
+      updateStats();
     } else {
-      connection("NOT SIGNED IN");
-      showView("authView");
+      box.innerHTML = `
+        <h3>Something doesn't fit.</h3>
+        <p>Your theory doesn't fully explain the evidence. Revisit the statements and records, then try again. Hint: ${current.hint}</p>
+        <div class="reward">KEEP INVESTIGATING · NO XP AWARDED</div>`;
+      toast("Not quite. Review the evidence and try again.");
     }
-
-    db.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        user = null;
-        profile = null;
-        $("signOut").classList.add("hidden");
-        connection("SIGNED OUT");
-        showView("authView");
-      } else if (
-        event === "SIGNED_IN" &&
-        session?.user &&
-        (!user || user.id !== session.user.id)
-      ) {
-        // Defer profile queries until after the auth callback.
-        setTimeout(() => enterApp(session.user), 0);
-      }
-    });
+    box.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
 
-  init();
+  $("enterBtn").addEventListener("click",() => showView("archive"));
+  $("homeLink").addEventListener("click",event => {
+    event.preventDefault();
+    showView("home");
+  });
+  document.querySelectorAll("[data-home]").forEach(button => {
+    button.addEventListener("click",() => showView("home"));
+  });
+  $("backBtn").addEventListener("click",() => showView("archive"));
+  document.querySelectorAll("[data-phase]").forEach(button => {
+    button.addEventListener("click",() => setPhase(button.dataset.phase));
+  });
+  $("deductionForm").addEventListener("submit",submitDeduction);
+
+  $("resetBtn").addEventListener("click",() => {
+    if (!window.confirm("Reset all MINDCASE progress saved in this browser? This cannot be undone.")) return;
+    state = {xp:0,solved:[],reviewed:{}};
+    save();
+    updateStats();
+    renderCases();
+    toast("Progress reset.");
+  });
+
+  updateStats();
 })();
