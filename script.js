@@ -6,8 +6,13 @@
 
   const cases = [
     {
-      id:"last-guest", number:"001", title:"The Last Guest",
-      category:"CRIME", difficulty:"MODERATE", symbol:"⌁", accent:"#d9b778",
+      id:"last-guest",
+      number:"001",
+      title:"The Last Guest",
+      category:"CRIME",
+      difficulty:"MODERATE",
+      symbol:"⌁",
+      accent:"#d9b778",
       tag:"LOCKED ROOM",
       short:"A collector is found unconscious after a closed-door dinner. Three guests insist they never left their seats.",
       objective:"Find who entered the study and why the timeline does not add up.",
@@ -19,9 +24,9 @@
         {id:"camera",icon:"◉",title:"Hall Camera Summary",type:"VIDEO SUMMARY",text:"The hallway camera shows a person carrying a folded dinner cloth entering the study corridor. The face is obscured, but the person wears the dark staff uniform issued to Mara.",stamp:"IMAGE INCONCLUSIVE"}
       ],
       suspects:[
-        {id:"mara",name:"Mara Vale",role:"PERSONAL ASSISTANT",initial:"M",statement:"I never went near the study. My access card was in the staff room. I was folding linen before dinner service ended."},
-        {id:"elliot",name:"Elliot Cross",role:"BUSINESS PARTNER",initial:"E",statement:"Victor and I argued about the collection, but I left before nine-thirty. I had no reason to return."},
-        {id:"june",name:"June Park",role:"HEAD CHEF",initial:"J",statement:"I was cleaning the kitchen. I carried linen to the corridor once, but I never entered the study."}
+        {id:"mara",name:"Mara Vale",role:"PERSONAL ASSISTANT",initial:"M",portrait:"👩🏻‍💼",statement:"I never went near the study. My access card was in the staff room. I was folding linen before dinner service ended."},
+        {id:"elliot",name:"Elliot Cross",role:"BUSINESS PARTNER",initial:"E",portrait:"🧔🏻",statement:"Victor and I argued about the collection, but I left before nine-thirty. I had no reason to return."},
+        {id:"june",name:"June Park",role:"HEAD CHEF",initial:"J",portrait:"👩🏽‍🍳",statement:"I was cleaning the kitchen. I carried linen to the corridor once, but I never entered the study."}
       ],
       motives:[
         {id:"cover",label:"Cover up a changed inventory"},
@@ -39,9 +44,14 @@
       hint:"Compare the access record with each person's exact claim. Then ask which clue explains Victor's meeting about the inventory."
     },
     {
-      id:"perfect-alibi", number:"002", title:"The Perfect Alibi",
-      category:"PSYCHOLOGICAL", difficulty:"CHALLENGING", symbol:"◷",
-      accent:"#83b8d7", tag:"FALSE TIMELINE",
+      id:"perfect-alibi",
+      number:"002",
+      title:"The Perfect Alibi",
+      category:"PSYCHOLOGICAL",
+      difficulty:"CHALLENGING",
+      symbol:"◷",
+      accent:"#83b8d7",
+      tag:"FALSE TIMELINE",
       short:"A priceless museum exhibit disappears during a power cut. One suspect's alibi sounds too perfect.",
       objective:"Find the contradiction between the timeline and the physical evidence.",
       briefing:"A rare watch disappeared from a museum's locked display during a seven-minute power interruption. The display was not forced. Curator Adrian Shaw says he was in the public gallery with visitors the entire time. Security officer Lena Ortiz was checking the backup generator, while archivist Noah Bell says he was in the basement. The watch's display case was reopened using an authorized override.",
@@ -52,9 +62,9 @@
         {id:"power",icon:"ϟ",title:"Generator Report",type:"TECHNICAL REPORT",text:"The generator report confirms the seven-minute outage. The backup system did not reset the display's access log. The outage explains the dark cameras, but not the valid override code.",stamp:"SYSTEM CHECKED"}
       ],
       suspects:[
-        {id:"adrian",name:"Adrian Shaw",role:"MUSEUM CURATOR",initial:"A",statement:"I was in the gallery the entire time. The case override must have been a system fault during the outage."},
-        {id:"lena",name:"Lena Ortiz",role:"SECURITY OFFICER",initial:"L",statement:"I was at the generator panel. I can explain the power cut, but I do not have the curator's override code."},
-        {id:"noah",name:"Noah Bell",role:"ARCHIVIST",initial:"N",statement:"I was in the basement cataloguing. I heard the alarm, but I never went upstairs."}
+        {id:"adrian",name:"Adrian Shaw",role:"MUSEUM CURATOR",initial:"A",portrait:"🧑🏻‍🏫",statement:"I was in the gallery the entire time. The case override must have been a system fault during the outage."},
+        {id:"lena",name:"Lena Ortiz",role:"SECURITY OFFICER",initial:"L",portrait:"👮🏻‍♀️",statement:"I was at the generator panel. I can explain the power cut, but I do not have the curator's override code."},
+        {id:"noah",name:"Noah Bell",role:"ARCHIVIST",initial:"N",portrait:"🧑🏻‍💼",statement:"I was in the basement cataloguing. I heard the alarm, but I never went upstairs."}
       ],
       motives:[
         {id:"prestige",label:"Protect reputation and prestige"},
@@ -72,9 +82,14 @@
       hint:"An outage explains missing camera footage, but does it explain a valid personal authorization code? Check which statement is contradicted by the photo."
     },
     {
-      id:"silent-witness", number:"003", title:"The Silent Witness",
-      category:"HYBRID MYSTERY", difficulty:"EXPERT", symbol:"◈",
-      accent:"#b7a2df", tag:"HIDDEN MOTIVE",
+      id:"silent-witness",
+      number:"003",
+      title:"The Silent Witness",
+      category:"HYBRID MYSTERY",
+      difficulty:"EXPERT",
+      symbol:"◈",
+      accent:"#b7a2df",
+      tag:"HIDDEN MOTIVE",
       short:"A research notebook vanishes from a remote cabin. Muddy footprints and a witness tell different stories.",
       objective:"Separate the misleading trail from the clue that reveals the real reason.",
       briefing:"A research notebook vanished from a locked cabin during a storm. It contained observations that could expose a serious mistake in a conservation project. Three people had access: researcher Tomas Reed, land manager Evelyn Hart, and caretaker Sam Dyer. Muddy footprints lead toward a rear window, but its latch is intact. No one admits entering the cabin after sunset.",
@@ -85,9 +100,9 @@
         {id:"checklist",icon:"☷",title:"Caretaker Checklist",type:"ROUTINE RECORD",text:"Sam's nightly checklist notes that Tomas requested the spare key at 7:10 PM to correct a page in the notebook. Sam recorded the key's return at 7:28 PM, but the cabin inventory was not checked until morning. Tomas was the only person documented with key access after sunset.",stamp:"KEY MOVEMENT RECORDED"}
       ],
       suspects:[
-        {id:"tomas",name:"Tomas Reed",role:"FIELD RESEARCHER",initial:"T",statement:"I only corrected a page and returned the key. I never took the notebook. I was trying to fix the research before anyone saw the mistake."},
-        {id:"evelyn",name:"Evelyn Hart",role:"LAND MANAGER",initial:"E",statement:"The project matters to the whole region. I had no reason to go into the cabin during a storm."},
-        {id:"sam",name:"Sam Dyer",role:"CABIN CARETAKER",initial:"S",statement:"I lock up at sunset. I recorded the key return, but I did not check the notebook's location that evening."}
+        {id:"tomas",name:"Tomas Reed",role:"FIELD RESEARCHER",initial:"T",portrait:"🧑🏼‍🔬",statement:"I only corrected a page and returned the key. I never took the notebook. I was trying to fix the research before anyone saw the mistake."},
+        {id:"evelyn",name:"Evelyn Hart",role:"LAND MANAGER",initial:"E",portrait:"👩🏻‍💼",statement:"The project matters to the whole region. I had no reason to go into the cabin during a storm."},
+        {id:"sam",name:"Sam Dyer",role:"CABIN CARETAKER",initial:"S",portrait:"🧑🏽‍🔧",statement:"I lock up at sunset. I recorded the key return, but I did not check the notebook's location that evening."}
       ],
       motives:[
         {id:"protect",label:"Protect himself from the research error"},
@@ -113,11 +128,16 @@
 
   function loadState() {
     try {
-      const s = JSON.parse(localStorage.getItem(KEY) || "{}");
+      const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+
       return {
-        xp: Number.isFinite(s.xp) ? Math.max(0,s.xp) : 0,
-        solved: Array.isArray(s.solved) ? s.solved.filter(id => cases.some(c => c.id === id)) : [],
-        reviewed: s.reviewed && typeof s.reviewed === "object" ? s.reviewed : {}
+        xp:Number.isFinite(saved.xp) ? Math.max(0,saved.xp) : 0,
+        solved:Array.isArray(saved.solved)
+          ? saved.solved.filter(id => cases.some(c => c.id === id))
+          : [],
+        reviewed:saved.reviewed && typeof saved.reviewed === "object"
+          ? saved.reviewed
+          : {}
       };
     } catch {
       return {xp:0,solved:[],reviewed:{}};
@@ -144,13 +164,18 @@
     $("homeXP").textContent = state.xp;
     $("homeRank").textContent = rank();
     $("playerXP").textContent = `${state.xp} XP`;
-    $("playerRank").textContent = `${rank().toLowerCase()} · ${state.solved.length} solved`;
+    $("playerRank").textContent =
+      `${rank().toLowerCase()} · ${state.solved.length} solved`;
   }
 
   function showView(id) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(view => {
+      view.classList.remove("active");
+    });
+
     $(id).classList.add("active");
     window.scrollTo({top:0,behavior:"smooth"});
+
     if (id === "archive") renderCases();
     updateStats();
   }
@@ -158,8 +183,12 @@
   function toast(message) {
     $("toast").textContent = message;
     $("toast").classList.add("show");
+
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => $("toast").classList.remove("show"),2600);
+
+    toastTimer = setTimeout(() => {
+      $("toast").classList.remove("show");
+    },2600);
   }
 
   function renderCases() {
@@ -169,23 +198,35 @@
     cases.forEach(c => {
       const solved = state.solved.includes(c.id);
       const card = document.createElement("article");
+
       card.className = `case-card${solved ? " solved" : ""}`;
       card.style.setProperty("--accent",c.accent);
       card.tabIndex = 0;
       card.setAttribute("role","button");
       card.setAttribute("aria-label",`Open ${c.title}`);
+
       card.innerHTML = `
-        <div class="case-top"><span>FILE / ${c.number}</span><span class="case-tag">${c.tag}</span></div>
+        <div class="case-top">
+          <span>FILE / ${c.number}</span>
+          <span class="case-tag">${c.tag}</span>
+        </div>
         <div class="case-symbol">${c.symbol}</div>
-        <h3>${c.title}</h3><p>${c.short}</p>
-        <div class="case-bottom"><span>${c.difficulty}</span><strong>${solved ? "✓ SOLVED" : "OPEN FILE ↗"}</strong></div>`;
+        <h3>${c.title}</h3>
+        <p>${c.short}</p>
+        <div class="case-bottom">
+          <span>${c.difficulty}</span>
+          <strong>${solved ? "✓ SOLVED" : "OPEN FILE ↗"}</strong>
+        </div>`;
+
       card.addEventListener("click",() => openCase(c.id));
-      card.addEventListener("keydown",e => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
+
+      card.addEventListener("keydown",event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
           openCase(c.id);
         }
       });
+
       grid.appendChild(card);
     });
   }
@@ -202,7 +243,9 @@
     $("objective").textContent = current.objective;
     $("briefingText").textContent = current.briefing;
     $("verdict").className = "verdict hidden";
+
     $("deductionForm").reset();
+
     renderEvidence();
     renderSuspects();
     renderChoices();
@@ -212,7 +255,10 @@
   }
 
   function reviewedIds() {
-    if (!Array.isArray(state.reviewed[current.id])) state.reviewed[current.id] = [];
+    if (!Array.isArray(state.reviewed[current.id])) {
+      state.reviewed[current.id] = [];
+    }
+
     return state.reviewed[current.id];
   }
 
@@ -226,15 +272,26 @@
 
     current.evidence.forEach(item => {
       const button = document.createElement("button");
+
       button.type = "button";
       button.className = "evidence-item";
       button.dataset.id = item.id;
-      button.innerHTML = `<span class="evidence-icon">${item.icon}</span><span><strong>${item.title}</strong><small>${item.type}</small></span>`;
+
+      button.innerHTML = `
+        <span class="evidence-icon">${item.icon}</span>
+        <span>
+          <strong>${item.title}</strong>
+          <small>${item.type}</small>
+        </span>`;
+
       button.addEventListener("click",() => inspectEvidence(item.id));
       list.appendChild(button);
     });
 
-    $("evidenceDetail").innerHTML = `<small>SELECT AN EVIDENCE FILE</small><p>Choose an item to inspect it.</p><p><b>Investigator's hint:</b> ${current.hint}</p>`;
+    $("evidenceDetail").innerHTML = `
+      <small>SELECT AN EVIDENCE FILE</small>
+      <p>Choose an item to inspect it.</p>
+      <p><b>Investigator's hint:</b> ${current.hint}</p>`;
   }
 
   function inspectEvidence(id) {
@@ -242,6 +299,7 @@
     if (!item) return;
 
     const reviewed = reviewedIds();
+
     if (!reviewed.includes(id)) {
       reviewed.push(id);
       save();
@@ -250,8 +308,10 @@
     document.querySelectorAll(".evidence-item").forEach(button => {
       const active = button.dataset.id === id;
       button.classList.toggle("selected",active);
+
       const oldCheck = button.querySelector(".check");
       if (oldCheck) oldCheck.remove();
+
       if (reviewed.includes(button.dataset.id)) {
         const check = document.createElement("span");
         check.className = "check";
@@ -261,8 +321,11 @@
     });
 
     $("evidenceDetail").innerHTML = `
-      <small>${item.type}</small><h3>${item.title}</h3>
-      <p>${item.text}</p><span class="stamp">${item.stamp}</span>`;
+      <small>${item.type}</small>
+      <h3>${item.title}</h3>
+      <p>${item.text}</p>
+      <span class="stamp">${item.stamp}</span>`;
+
     updateClueCount();
   }
 
@@ -270,13 +333,108 @@
     const grid = $("suspectGrid");
     grid.replaceChildren();
 
-    current.suspects.forEach(s => {
+    current.suspects.forEach((suspect,index) => {
       const card = document.createElement("article");
+
       card.className = "suspect-card";
-      card.innerHTML = `
-        <div class="suspect-head"><div class="suspect-avatar">${s.initial}</div>
-        <div><h3>${s.name}</h3><small>${s.role}</small></div></div>
-        <p>${s.statement}</p>`;
+      card.tabIndex = 0;
+      card.setAttribute("role","button");
+      card.setAttribute("aria-pressed","false");
+      card.setAttribute(
+        "aria-label",
+        `Focus on ${suspect.name}'s statement`
+      );
+
+      card.style.setProperty(
+        "--character-delay",
+        `${index * 100}ms`
+      );
+
+      const head = document.createElement("div");
+      head.className = "suspect-head";
+
+      const portrait = document.createElement("div");
+      portrait.className = "suspect-avatar character-portrait";
+      portrait.setAttribute("aria-hidden","true");
+
+      const emoji = document.createElement("span");
+      emoji.className = "portrait-emoji";
+      emoji.textContent = suspect.portrait || "🕵️";
+
+      const initial = document.createElement("span");
+      initial.className = "portrait-initial";
+      initial.textContent = suspect.initial;
+
+      portrait.append(emoji,initial);
+
+      const nameBlock = document.createElement("div");
+      nameBlock.className = "character-name";
+
+      const name = document.createElement("h3");
+      name.textContent = suspect.name;
+
+      const role = document.createElement("small");
+      role.textContent = suspect.role;
+
+      nameBlock.append(name,role);
+
+      const focus = document.createElement("span");
+      focus.className = "character-focus";
+      focus.setAttribute("aria-hidden","true");
+      focus.textContent = "＋";
+
+      head.append(portrait,nameBlock,focus);
+
+      const speech = document.createElement("div");
+      speech.className = "character-speech";
+
+      const label = document.createElement("span");
+      label.className = "speech-label";
+      label.textContent = "STATEMENT";
+
+      const statement = document.createElement("p");
+      statement.textContent = suspect.statement;
+
+      speech.append(label,statement);
+
+      const observation = document.createElement("div");
+      observation.className = "character-observation";
+      observation.textContent = "Select to focus on this statement.";
+
+      card.append(head,speech,observation);
+
+      function selectCharacter() {
+        grid.querySelectorAll(".suspect-card").forEach(other => {
+          const selected = other === card;
+
+          other.classList.toggle("character-selected",selected);
+          other.setAttribute("aria-pressed",String(selected));
+
+          const otherFocus = other.querySelector(".character-focus");
+          if (otherFocus) {
+            otherFocus.textContent = selected ? "✓" : "＋";
+          }
+
+          const otherObservation =
+            other.querySelector(".character-observation");
+
+          if (otherObservation) {
+            otherObservation.textContent = selected
+              ? "FOCUS: Compare this statement with the evidence."
+              : "Select to focus on this statement.";
+          }
+        });
+      }
+
+      card.addEventListener("click",selectCharacter);
+
+      card.addEventListener("keydown",event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectCharacter();
+        }
+      });
+
       grid.appendChild(card);
     });
   }
@@ -284,6 +442,7 @@
   function fillSelect(id,items,placeholder) {
     const select = $(id);
     select.replaceChildren();
+
     const first = document.createElement("option");
     first.value = "";
     first.textContent = placeholder;
@@ -310,6 +469,7 @@
       suspects:["03 / 04","✦ SUSPECT INTERVIEWS","Everyone has a story.",75],
       deduction:["04 / 04","✦ FINAL DEDUCTION","Connect the evidence.",100]
     };
+
     const info = details[phase];
     if (!info) return;
 
@@ -323,7 +483,10 @@
     });
 
     if (phase === "evidence") renderEvidence();
-    if (phase === "deduction") $("verdict").classList.add("hidden");
+
+    if (phase === "deduction") {
+      $("verdict").classList.add("hidden");
+    }
   }
 
   function submitDeduction(event) {
@@ -333,56 +496,83 @@
     const suspect = $("suspectChoice").value;
     const motive = $("motiveChoice").value;
     const evidence = $("evidenceChoice").value;
+
     if (!suspect || !motive || !evidence) {
       toast("Complete all three parts of your deduction.");
       return;
     }
 
     const answer = current.answer;
-    const correct = suspect === answer.suspect &&
-      motive === answer.motive && evidence === answer.evidence;
+
+    const correct =
+      suspect === answer.suspect &&
+      motive === answer.motive &&
+      evidence === answer.evidence;
+
     const box = $("verdict");
     box.className = `verdict${correct ? "" : " wrong"}`;
 
     if (correct) {
       const alreadySolved = state.solved.includes(current.id);
+
       if (!alreadySolved) {
         state.solved.push(current.id);
         state.xp += 100;
         save();
       }
+
       box.innerHTML = `
         <h3>${alreadySolved ? "Case reopened. Your verdict stands." : "Deduction confirmed."}</h3>
         <p>${current.explanation}</p>
-        <div class="reward">${alreadySolved ? "ALREADY CREDITED · NO EXTRA XP" : "+100 XP · CASE SOLVED"}</div>`;
-      toast(alreadySolved ? "You've already earned XP for this case." : "Excellent work. +100 XP earned!");
+        <div class="reward">
+          ${alreadySolved ? "ALREADY CREDITED · NO EXTRA XP" : "+100 XP · CASE SOLVED"}
+        </div>`;
+
+      toast(
+        alreadySolved
+          ? "You've already earned XP for this case."
+          : "Excellent work. +100 XP earned!"
+      );
+
       updateStats();
     } else {
       box.innerHTML = `
         <h3>Something doesn't fit.</h3>
         <p>Your theory doesn't fully explain the evidence. Revisit the statements and records, then try again. Hint: ${current.hint}</p>
         <div class="reward">KEEP INVESTIGATING · NO XP AWARDED</div>`;
+
       toast("Not quite. Review the evidence and try again.");
     }
+
     box.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
 
   $("enterBtn").addEventListener("click",() => showView("archive"));
+
   $("homeLink").addEventListener("click",event => {
     event.preventDefault();
     showView("home");
   });
+
   document.querySelectorAll("[data-home]").forEach(button => {
     button.addEventListener("click",() => showView("home"));
   });
+
   $("backBtn").addEventListener("click",() => showView("archive"));
+
   document.querySelectorAll("[data-phase]").forEach(button => {
-    button.addEventListener("click",() => setPhase(button.dataset.phase));
+    button.addEventListener("click",() => {
+      setPhase(button.dataset.phase);
+    });
   });
+
   $("deductionForm").addEventListener("submit",submitDeduction);
 
   $("resetBtn").addEventListener("click",() => {
-    if (!window.confirm("Reset all MINDCASE progress saved in this browser? This cannot be undone.")) return;
+    if (!window.confirm(
+      "Reset all MINDCASE progress saved in this browser? This cannot be undone."
+    )) return;
+
     state = {xp:0,solved:[],reviewed:{}};
     save();
     updateStats();
